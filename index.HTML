@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<!-- Website ini dapat menampilkan informasi wisata Kota Padang lengkap dengan data peminatnya sesuai pengaturan script yang telah dibuat -->
+<!-- Website ini juga dilengkapi dengan pop-up welcome dan info detail untuk setiap wisata -->
+<html lang="id"> <!-- ini berfungsi untuk mengetahui kalau html ini pakai bahasa indonesia-->
+<head>
+    <!-- mengatur agar huruf Indonesia yang diinputkan ditampilkan dengan benar -->
+    <meta charset="UTF-8">
+    
+    <!-- membuat website otomatis menyesuaikan ukuran laya seperti pada laptop dan hp dengan ukuran layar yang berbeda, nah websitenya dapat menyesuaikan otomatis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Judul atau teks yang akan terlihat pada bagian border website -->
+    <title>Kota Padang - Wisata & Budaya</title>
+    
+    <!-- Perintah yang digunakan untuk mengimport atau memasukkan peta yang akan ditampilkan, menggunakan integrity yang didapat dari website resmi leaflet agar data berupa peta yang diinputkan tidak mudah dihack atau diretas oleh orang  -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    
+    <style>
+        /* === Bagian CSS yang mengatur tampilan visual website, kayak mendekorasi dan menentukan tampilannya seperti warna, ukuran, posisi, dll === */
+        body {
+            font-family: Arial, sans-serif; /* Font yang digunakan di seluruh website */
+            margin: 0; /* Pengaturan margin dengan ketentuan 0*/
+            background-color: aliceblue; /* Warna latar belakang halaman */
+            padding: 0; /* Pengaturan jarak tepi elemen dengan bagian isi yang diatur 0 */
+        }
+
+        /* === Bagian CSS yang mengatur tampilan header website === */
+        header {
+            text-align: center; /* Fungsi yang digunakan untuk membuat teks dan gambar di tengah */
+            background-color: deepskyblue; /* Warna latar belakang untuk bagian header */
+            color: black; /* Warna teks pada bagian header */
+            padding: 20px 0; /* Jarak di dalam header yang diatur pada 20px bagian atas dan bawah, serta 0px pada bagian kiri dan kanan */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Efek bayangan di bawah header */
+        }
+
+        /* bagian CSS yang mengatur tampilan gambar atau logo di dalam sebuah header */
+        header img {
+            width: 100px; /* fungsi yang mengatur lebar logo */
+            height: auto; /* fungsi yang mengatur tinggi logo dimana tinggi menyesuaikan proporsi header */
+            vertical-align: middle; /* fungsi yang membuat logo sejajar secara vertikal dengan teks di sebelahnya */
+        }
+
+        /* Styling untuk judul h1 di header */
+        header h1 {
+            display: inline-block; /* Membuat h1 bisa sejajar dengan logo */
+            margin: 0 15px; /* Jarak kiri-kanan dari logo, memberi jarak antara tulisan dan logo */
+            font-size: 24px; /* Ukuran font judul */
+            vertical-align: middle; /* Membuat teks sejajar tengah dengan logo */
+            letter-spacing: 1px; /* Jarak antar huruf */
+        }
+
+        /* === bagian CSS yang mengatur tampilan utama website === */
+        main {
+            padding: 20px; /* Jarak di dalam konten utama yang memberi ruang agar konten tidak menempel di tepi */
+        }
+
+        /* bagian CSS yang digunakan untuk mengatur h2 */
+        h2 {
+            text-align: center; /* fungsi yang mengatur agar teks berada di tengah */
+            color: #003366; /* fungsi yang mengatur warna teks yakni warna teks biru tua */
+            margin-bottom: 30px; /* Jarak 30px di bawah judul yang dapat memberi ruang antara judul dengan konten dibawahnya */
+        }
+
+        /* === bagian CSS yang digunakan untuk mengatur table === */
+        /* Tabel berupa baris dan kolom untuk menampilkan informasi yang diinginkan */
+        table {
+            width: 90%; /* Pengaturan Lebar tabel sekitar 90% dari layar */
+            margin: 20px auto; /* Margin atas-bawah sebesar 20px dan margin kiri-kanan diatur otomatis berada ditengah */
+            border-collapse: collapse; /* Penggunaan garis border yang berdekatan agar border pada tabel menyatu */
+            box-shadow: 0 0 8px rgba(0,0,0,0.1); /* Efek bayangan untuk tabelsehingga terkesan 3 dimensi */
+            background-color: white; /* Warna latar belakang tabel yang diatur berwarna putih */
+        }
+
+        /* bagian CSS yang digunakan untuk mengatur header tabel (th) dan sel data (td) */
+        th, td {
+            border: 1px solid #ddd; /* Garis tepi border abu-abu terang berupa garis solid tidak putus-putus */
+            padding: 10px; /* Jarak di dalam cell atau kolom agar tidak menempel dengan garis border */
+            text-align: center; /* Pengaturan untuk mengatur teks untuk berada di tengah */
+        }
+
+        /* Bagian CSS khusus yang digunakan untuk header tabel */
+        th {
+            background-color: #b6d3ff; /* Warna latar belakang yang diatur biru muda */
+            font-weight: bold; /* perintah yang digunakan untuk menebalkan teks */
+        }
+
+        /* Bagian CSS yang digunakan untuk baris genap (baris ke-2, 4, 6, dst) */
+        tr:nth-child(even) {
+            background-color: #a6c9f8; /* Warna latar belakang yang berwarna biru muda */
+        }
+
+        /* Bagian CSS yang digunakan untuk baris ganjil kecuali baris pertama (header) */
+        tr:nth-child(odd):not(:first-child) {
+            background-color: #ffffff; /* Warna latar belakang yang diatur berwarna putih */
+        }
+
+        /*  pengaturan untuk perubahan tampilan ketika kursor mouse berada di atas baris, seperti lebih besar atau seperti lebih menonjol */
+        tr:hover:not(:first-child) { /*pengaturan yang menegaskan kalau style ini tidak berlaku untuk header */
+            background-color: #87ceeb; /* Warna latar belakang berubah saat di-hover atau saat kursor berada pada bagian tabel tersebut */
+            cursor: pointer; /* Kursor berubah jadi pointer atau gambar menyerupai tangan */
+            transform: scale(1.01); /* perubahan untuk baris yaitu pada perubahan ukuran berupa bagian tabel yang sedikit membesar */
+            transition: all 0.2s ease; /* pemberian animasi halus yakni untuk semua kesatuan dalam kolom tersebut diberikan transisi halus berupa transisi dimulai dan diakhiri secara perlahan selama 0.2 detik */
+        }
+
+        /* === Bagian CSS yang digunakan untuk mengatur tombol info yang popup === */
+        /* Tombol untuk membuka pop-up pada bagian detail wisata */
+        .info-btn {
+            background-color: #0055cc; /* Warna latar belakang yang diatur berwarna biru */
+            color: white; /* Warna teks diatur berwarna putih */
+            border: none; /* pengaturan penggunaan border yang berupa tanpa border */
+            padding: 8px 15px; /* pengaturan jarak dalam tombol atas bawah sebesar 8px dan kiri kanan sebesar 15px*/
+            border-radius: 5px; /* pengaturan sudut tombol yang diatur melengkung */
+            cursor: pointer; /* Kursor berubah jadi pointer atau gambar menyerupai tangan */
+            font-size: 14px; /* Ukuran font pada bagian informasi popup */
+            transition: background-color 0.3s; /* Animasi smooth selama 0.3 detik khusus untuk perubahan warna background */
+        }
+
+        /* Efek hover atau efek yang akan muncul saat kursor berada di bagian tombol info */
+        .info-btn:hover {
+            background-color: #003d99; /* Warna diatur lebih gelap saat di-hover atau saat kursos berada di bagian button detail info */
+        }
+
+        /* === Bagian CSS yang digunakan untuk mengatur footer halaman website === */
+        footer {
+            text-align: center; /* Pengaturan yang dilakukan untuk mengatur agar Teks tetap berada di tengah */
+            margin: 20px 0; /* Pengaturan margin dengan Jarak atas-bawah sebesar 20px dan kiri kanan dibentuk tanpa margin */
+            font-size: 14px; /* pengaturan Ukuran font */
+            color: #555; /* pengaturan Warna abu-abu gelap */
+        }
+
+        /* Pengaturan untuk link yang ada di footer */
+        footer a {
+            color: #0055cc; /* teks dibuat berwarna biru Warna biru */
+            text-decoration: none; /* teks dibuat tanpa garis bawah */
+        }
+
+        /* Efek hover atau efek yang muncul ketika kursor berada pada link di footer */
+        footer a:hover {
+            text-decoration: underline; /* Menambah garis bawah saat adanya efek hover */
+        }
+
+        /* === Bagian CSS yang mengatur popup === */
+        /* Modal merupakan kotak pop-up yang muncul di atas halaman */
+        .modal {
+            display: none; /* Default tidak ditampilkan atau defaultnya tersembunyi */
+            position: fixed; /* Posisi diatur untuk tetap di layar dan tidak berubah menyesuaikan layar */
+            z-index: 1000; /* Urutan tumpukan elemen dimana semakin besar maka terletak semakin di atas yang berada di atas semua elemen (angka besar = paling atas) */
+            left: 0;
+            top: 0;
+            width: 100%; /* Lebar diatur memenuhi layar */
+            height: 100%; /* Tinggi diatur memenuhi layar */
+            background-color: rgba(0,0,0,0.5); /* Latar belakang hitam semi-transparan */
+            animation: fadeIn 0.3s; /* Animasi fade in saat muncul selama 0.3 detik pada awalan ketika popup muncul*/
+        }
+
+        /* pengaturan Konten di dalam modal */
+        .modal-content {
+            background-color: white; /* pengaturan latar belakang berwarna putih */
+            margin: 5% auto; /* Jarak atas diatur 5%, dengan posisi berada di tengah horizontal */
+            padding: 30px; /* Jarak dalam konten diatur sebesar 30px*/
+            border-radius: 10px; /* Sudut melengkung pada bagian tabel atau border tab */
+            width: 90%; /* Lebar 90% dari layar (lebih lebar) */
+            max-width: 800px; /* Maksimal lebar 800px (lebih besar) */
+            max-height: 85vh; /* Maksimal tinggi 85% dari tinggi layar */
+            overflow-y: auto; /* Scroll vertikal jika konten panjang, sehingga dapat membaca keseluruhan info */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Bayangan untuk efek 3 dimensi dan estetika */
+            animation: slideDown 0.3s; /* Animasi slide down saat muncul dengan waktu selama 0.3 detik */
+        }
+        
+        /* pengaturan untuk scrollbar di modal ketika dibuka pada browser webkit seperti Chrome */
+        .modal-content::-webkit-scrollbar {
+            width: 8px; /* Lebar scrollbar */
+        }
+        
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1; /* Warna track scrollbar */
+            border-radius: 10px;
+        }
+        
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #888; /* Warna thumb scrollbar */
+            border-radius: 10px;
+        }
+        
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #555; /* Warna thumb saat hover atau saat kursor diarahkan pada objek */
+        }
+
+        /* === Bagian CSS untuk mengatur tombol close === */
+        /* Tombol close berupa tombol x yang digunakan untuk menutup pop-up */
+        .close {
+            color: #aaa; /* pengaturan warna abu-abu */
+            float: right; /* pengaturan posisi berada di kanan */
+            font-size: 28px; /* pengaturan ukuran font besar */
+            font-weight: bold; /* pengaturan teks tebal */
+            cursor: pointer; /* Kursor berubah berupa pointer ketika diarahkan pada tombol */
+            line-height: 20px; /* pengaturan tinggi baris */
+        }
+
+        /* Efek hover dan focus untuk tombol close */
+        .close:hover,
+        .close:focus {
+            color: #000; /* pengaturan Warna hitam saat hover */
+            text-decoration: none; /* pengaturan Tanpa dekorasi */
+        }
+
+        /* pengaturan untuk judul di dalam modal */
+        .modal h2 {
+            color: #003366; /* pengaturan Warna biru tua */
+            margin-top: 0; /* pengaturan tanpa margin atas */
+            border-bottom: 2px solid deepskyblue; /* pengaturan Garis bawah yang diberi warna biru */
+            padding-bottom: 10px; /* pengaturan Jarak bawah */
+        }
+
+        /* pengaturan untuk paragraf di dalam modal */
+        .modal p {
+            line-height: 1.6; /* pengaturan jarak antar baris */
+            color: #333; /* pengaturan warna teks abu gelap */
+            text-align: justify; /* pengaturan teks rata kiri-kanan */
+        }
+
+        /* pengaturan untuk list di dalam modal */
+        .modal ul {
+            text-align: left; /* pengaturan teks rata kiri */
+            line-height: 1.8; /* pengaturan jarak antar baris */
+            color: #333; /* pengaturan warna teks */
+        }
+
+        /* === Bagian CSS untuk mengatur animasi keseluruhan === */
+        /* Animasi fade in yang diatur untuk modal */
+        @keyframes fadeIn {
+            from { opacity: 0; } /* pengaturan untuk mulai transparan */
+            to { opacity: 1; } /* pengaturan untuk jadi tidak transparan */
+        }
+
+        /* Animasi slide down untuk konten modal */
+        @keyframes slideDown {
+            from { 
+                transform: translateY(-50px); /* pengaturan transisi mulai dari atas 50px */
+                opacity: 0; /* pengaturan transparansi yang daitur transparan */
+            }
+            to { 
+                transform: translateY(0); /* pengaturan transisi kembali ke posisi normal */
+                opacity: 1; /* pengaturan transparansi diatur tidak transparan */
+            }
+        }
+
+        /* === Bagian CSS yang digunakan untuk mengatur bagian info detail === */
+        /* pengaturan khusus untuk kolom dengan info detail */
+        .info-detail {
+            text-align: left; /*pengaturan teks rata kiri */
+            padding: 15px; /* pengaturan jarak dalam */
+        }
+
+        .info-detail h3 {
+            color: #003366; /* pengaturan warna biru tua */
+            margin-top: 15px; /* pengaturan jarak atas */
+            margin-bottom: 5px; /* pengaturan jarak bawah */
+        }
+
+        .info-detail p {
+            margin: 5px 0; /* pengaturan jarak atas-bawah */
+            line-height: 1.5; /* pengaturan jarak antar baris */
+        }
+        
+        /* === Bagian CSS yang digunakan untuk mengatur gambar di modal popup === */
+        /* pengaturan untuk container gambar */
+        .modal-image {
+            width: 100%; /* pengaturan lebar penuh */
+            max-height: 400px; /* pengaturan maksimal tinggi 400px */
+            object-fit: cover; /* pengaturan gambar untuk memenuhi area tanpa distorsi */
+            border-radius: 10px; /* pengaturan sudut melengkung */
+            margin: 15px 0; /* pengaturan jarak atas-bawah */
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2); /* pengaturan bayangan gambar */
+        }
+        
+        /* === Bagian CSS untuk mengatur peta === */
+        /* Pengaturan untuk peta Leaflet */
+        #map-section {
+            margin: 40px auto; /* pengaturan jarak atas-bawah, posisi tengah */
+            padding: 20px; /* pengaturan jarak dalam atau jarak antara objek 1 dengan lainnya */
+            max-width: 90%; /* pengaturan lebar maksimal 90% */
+        }
+        
+        #map-section h2 {
+            text-align: center; /* pengaturan judul di tengah */
+            color: #003366; /* pengaturan warna biru tua */
+            margin-bottom: 20px; /* pengaturan jarak bawah */
+        }
+        
+        /*pengaturan untuk elemen div peta */
+        #map {
+            height: 500px; /* pengaturan tinggi peta 500px */
+            width: 100%; /* pengaturan lebar penuh */
+            border-radius: 10px; /* pengaturan sudut melengkung pada border popup */
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2); /* pengaturan bayangan */
+            margin: 0 auto; /* pengaturan posisi tengah */
+        }
+        
+        /* pengaturan responsif untuk layar kecil */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%; /* pengaturan lebar 95% di mobile */
+                padding: 20px; /* pengaturan padding lebih kecil */
+                margin: 10% auto; /* pengaturan margin atas lebih besar */
+            }
+            
+            .modal-image {
+                max-height: 250px; /* pengaturan tinggi lebih kecil di mobile */
+            }
+            
+            #map {
+                height: 350px; /* pengaturan tinggi peta lebih kecil di mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- === Bagian html yang mengatur bagian atas atau header halaman website === -->
+    <!-- Header digunakan untuk mengatur bagian atas halaman web yang berisi logo dan judul website, img src digunakan untuk menambahkan gambar yang memiliki nama file yang sama dengan gambar yang telah disimpan pada folder-->
+    <header>
+        <img src="Logo Padang.png" alt="Logo Kota Padang"> 
+        <h1>Padang Kota Tercinta</h1>
+        <img src="logo sumbar.png" alt="Logo Sumatera Barat">
+    </header>
+
+    <!-- === Bagian html yang mengatur tabel informasi yang ditampilkan pada halaman utama -->
+    <!-- Bagian ini berisi informasi wisata dalam bentuk tabel, h2 berupa heading 2 atau judul yang ukurannya lebih kecil dari ukuran judul utama -->
+    <main>
+        <h2>Informasi Wisata Populer Kota Padang</h2>
+
+        <!-- Tabel untuk menampilkan data wisata -->
+        <!-- Table menggunakan baris dilambangkan dengan tr dan kolom dilambangkan dengan th untuk header dan td untuk data informasi tabel -->
+        <table>
+            <!-- Baris header tabel diawali dan ditutup dengan tr untuk mengetahui satu kesatuan baris-->
+            <tr>
+                <th>Nama Wisata</th>
+                <th>Lokasi</th>
+                <th>Daya Tarik</th>
+                <th>Peminat</th>
+                <th>Info lain</th> <!-- Kolom baru untuk tombol info -->
+            </tr>
+            
+            <!-- Baris data wisata 1 dengan data berupa Pantai Air Manis -->
+            <tr>
+                <td>Pantai Air Manis</td>
+                <td>Terletak di Kecamatan Padang Selatan</td>
+                <td>Wisata yang terkenal berupa Legenda Malin Kundang, panorama laut, dan ombak yang tenang</td>
+                <td>Sekitar ± 150.000 pengunjung/tahun</td>
+                <td>
+                    <!-- Tombol untuk membuka pop-up info detail -->
+                    <!-- onclick digunakan untuk memanggil fungsi JavaScript showDetailInfo dengan parameter ID wisata -->
+                    <button class="info-btn" onclick="showDetailInfo('airmanis')">Lihat Info</button>
+                </td>
+            </tr>
+            
+            <!-- Baris data wisata 2 dengan data berupa Pantai Padang -->
+            <tr>
+                <td>Pantai Padang</td>
+                <td>Terletak di pesisir Kota Padang dekat dengan Pusat Kota Padang</td>
+                <td>Wisata yang terkenal berupa sunset indah, jogging track, dan kuliner tepi pantai</td>
+                <td>Sekitar ± 400.000 pengunjung/tahun</td>
+                <td>
+                    <button class="info-btn" onclick="showDetailInfo('pantaipadang')">Lihat Info</button>
+                </td>
+            </tr>
+            
+            <!-- Baris data wisata 3 dengan data berupa Lubuk Nyarai -->
+            <tr>
+                <td>Lubuk Nyarai</td>
+                <td>Terletak di Hutan Gamaran, Lubuk Alung</td>
+                <td>Wisata yang terkenal berupa wisata alam, air terjun, dan trekking</td>
+                <td>Sekitar ± 20.000 pengunjung/tahun</td>
+                <td>
+                    <button class="info-btn" onclick="showDetailInfo('lubuknyarai')">Lihat Info</button>
+                </td>
+            </tr>
+            
+            <!-- Baris data wisata 4 dengan data berupa Museum Adityawarman -->
+            <tr>
+                <td>Museum Adityawarman</td>
+                <td>Terletak di Jl. Diponegoro No.10, Padang</td>
+                <td>Wisata yang terkenal berupa sejarah dan budaya Minangkabau</td>
+                <td>Sekitar ± 10.000 pengunjung/tahun</td>
+                <td>
+                    <button class="info-btn" onclick="showDetailInfo('museum')">Lihat Info</button>
+                </td>
+            </tr>
+        </table>
+    </main>
+
+    <!-- === Bagian html yang mengatur terkait isi peta === -->
+    <!-- Bagian ini menampilkan peta interaktif lokasi wisata -->
+    <section id="map-section">
+        <h2>📍 Peta Lokasi Wisata </h2>
+        
+        <!-- Div digunakan untuk menampung peta Leaflet -->
+        <!-- ID "map" akan digunakan oleh JavaScript untuk memanggil dan mengakses peta -->
+        <div id="map"></div>
+    </section>
+    
+
+    <!-- === Bagian html yang mengatur terkait popup pada halaman website === -->
+    <!-- Popup yang muncul pertama kali saat website dibuka tanpa adanya menekan tombol -->
+    <!-- ID "welcomeModal" digunakan untuk kontrol JavaScript -->
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content">
+            <!-- Tombol close dengan lambang X digunakan untuk menutup popup -->
+            <!-- onclick digunakan untuk memanggil fungsi closeWelcome() -->
+            <span class="close" onclick="closeWelcome()">&times;</span>
+            
+            <h2>Selamat Datang di Lamab Informasi Wisata Kota Padang!</h2>
+            
+            <p><strong>Kota Padang</strong> merupakan ibu kota Provinsi Sumatera Barat yang terletak di pesisir barat Pulau Sumatera. Kota ini dikenal sebagai pusat kebudayaan Minangkabau dan memiliki banyak destinasi wisata menarik.</p>
+            
+            <h3>Kenapa harus Padang?</h3>
+            <!--ul berfungsi sebagai penampungan informasi-informasi yang diinputkan-->
+            <!--li berfungsi sebagai list item atau list informasi agar informasi ditampilkan berupa list yang berurutan-->
+            <ul>
+                <li>Padang memiliki kuliner Legendaris berupa 'rumah' dari masakan Padang yang terkenal di seluruh dunia</li>
+                <li>Padang juga memiliki Pantai yang memukau yang berupa Garis pantai sepanjang 84 km dengan pemandangan sunset yang indah</li>
+                <li>Padang juga kaya akan budaya Tradisi Minangkabau yang masih kental dan terjaga</li>
+                <li>Selain itu, padang juga menyuguhkan alam yang menawan berupa pantai hingga pegunungan, semuanya ada di Padang</li>
+            </ul>
+            
+            <p style="margin-top: 20px; text-align: center;">
+                <button class="info-btn" onclick="closeWelcome()">Jelajahi Wisata Padang</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- === Bagian html yang digunakan untuk mengatur informasi popup === -->
+    <!-- Popup yang muncul saat tombol "Lihat Info" diklik -->
+    <!-- ID "detailModal" digunakan untuk kontrol JavaScript -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <!-- Pengaturan tombol close dengan lambang X -->
+            <span class="close" onclick="closeDetail()">&times;</span>
+            
+            <!-- Div digunakan untuk menampilkan konten detail wisata -->
+            <!-- Konten akan diisi oleh JavaScript sesuai wisata yang dipilih -->
+            <div id="detailContent" class="info-detail"></div>
+        </div>
+    </div>
+
+    <!-- === Bagian html yang digunakan untuk mengakses leaflet dan mengimport ke laman website === -->
+    <!-- Library Leaflet seperti pada JavaScript awal untuk membuat peta interaktif -->
+    <script 
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin="">
+    </script>
+
+    <!-- === Bagian pengaturan JavaScript untuk membantu interaktif pada laman web === -->
+    <!-- Script yang digunakan untuk mengontrol fungsi-fungsi interaktif website -->
+    <script>
+        // === Pengaturan JavaScript yang digunakan untuk mengatur data utama laman web ===
+        // Fungsi ini berjalan otomatis saat halaman selesai loading
+        window.onload = function() {
+            // Mengambil elemen modal welcome berdasarkan ID
+            var modal = document.getElementById('welcomeModal');
+            // Mengubah display menjadi 'block' untuk menampilkan modal
+            modal.style.display = 'block';
+            
+            // === INISIALISASI PETA SETELAH HALAMAN LOADED ===
+            initMap();
+        }
+
+        // === FUNGSI UNTUK MENUTUP WELCOME POP-UP ===
+        function closeWelcome() {
+            // Mengambil elemen modal welcome
+            var modal = document.getElementById('welcomeModal');
+            // Mengubah display menjadi 'none' untuk menyembunyikan modal
+            modal.style.display = 'none';
+        }
+
+        // === FUNGSI UNTUK MENAMPILKAN DETAIL INFO WISATA ===
+        // Parameter 'place' adalah ID wisata yang dipilih
+        function showDetailInfo(place) {
+            // Mengambil elemen modal detail
+            var modal = document.getElementById('detailModal');
+            // Mengambil div untuk konten detail
+            var content = document.getElementById('detailContent');
+            
+            // Variabel untuk menyimpan HTML konten detail
+            var detailHTML = '';
+            
+            // Switch case untuk menentukan konten berdasarkan wisata yang dipilih
+            switch(place) {
+                case 'airmanis':
+                    // Konten detail untuk Pantai Air Manis
+                    detailHTML = `
+                        <h2>🏖️ Pantai Air Manis</h2>
+                        
+                        <img src="pantai-air-manis.jpg" alt="Pantai Air Manis" class="modal-image" 
+                             onerror="this.style.display='none'">
+                        
+                        <h3>📍 Lokasi Lengkap:</h3>
+                        <p>Kecamatan Padang Selatan, ± 10 km dari pusat Kota Padang</p>
+                        
+                        <h3>🌟 Daya Tarik Utama:</h3>
+                        <ul>
+                            <li>Batu Malin Kundang - legenda anak durhaka yang dikutuk menjadi batu</li>
+                            <li>Pantai berpasir putih dengan ombak yang tenang</li>
+                            <li>Pemandangan Pulau Pisang Ketek dan Pulau Pisang Gadang</li>
+                            <li>Spot foto Instagram-able dengan background batu karang</li>
+                        </ul>
+                        
+                        <h3>🎫 Informasi Praktis:</h3>
+                        <p><strong>Harga Tiket:</strong> Rp 10.000/orang</p>
+                        <p><strong>Jam Operasional:</strong> 24 jam (rekomendasi datang pagi atau sore)</p>
+                        <p><strong>Fasilitas:</strong> Area parkir, warung makan, toilet, gazebo</p>
+                        
+                        <h3>💡 Tips Berkunjung:</h3>
+                        <ul>
+                            <li>Datang saat sore hari untuk menikmati sunset</li>
+                            <li>Gunakan alas kaki yang nyaman karena ada bebatuan</li>
+                            <li>Jangan lupa bawa kamera untuk foto di batu Malin Kundang</li>
+                        </ul>
+                    `;
+                    break;
+                    
+                case 'pantaipadang':
+                    // Konten detail untuk Pantai Padang
+                    detailHTML = `
+                        <h2>🌅 Pantai Padang</h2>
+                        
+                        <img src="pantai-padang.jpg" alt="Pantai Padang" class="modal-image"
+                             onerror="this.style.display='none'">
+                        
+                        <h3>📍 Lokasi Lengkap:</h3>
+                        <p>Jl. Samudera, Pusat Kota Padang (dekat dengan Hotel Pangeran Beach)</p>
+                        
+                        <h3>🌟 Daya Tarik Utama:</h3>
+                        <ul>
+                            <li>Sunset terindah di Kota Padang dengan view Samudera Hindia</li>
+                            <li>Jogging track sepanjang pantai untuk olahraga pagi/sore</li>
+                            <li>Deretan kuliner khas Padang di sepanjang pantai</li>
+                            <li>Tempat favorit warga lokal untuk berkumpul dan bersantai</li>
+                        </ul>
+                        
+                        <h3>🎫 Informasi Praktis:</h3>
+                        <p><strong>Harga Tiket:</strong> GRATIS</p>
+                        <p><strong>Jam Operasional:</strong> 24 jam</p>
+                        <p><strong>Fasilitas:</strong> Jogging track, area parkir luas, toilet umum, mushola, gazebo</p>
+                        
+                        <h3>🍽️ Kuliner Terdekat:</h3>
+                        <ul>
+                            <li>Sate Padang Ajo Ramon</li>
+                            <li>Ikan Bakar di sepanjang pantai</li>
+                            <li>Es Tebak khas Padang</li>
+                            <li>Kelapa muda segar</li>
+                        </ul>
+                        
+                        <h3>💡 Tips Berkunjung:</h3>
+                        <ul>
+                            <li>Datang sekitar pukul 17.00 untuk menikmati sunset terbaik</li>
+                            <li>Pantai sangat ramai di akhir pekan, datang pagi jika ingin suasana tenang</li>
+                            <li>Hati-hati dengan ombak yang kadang besar</li>
+                        </ul>
+                    `;
+                    break;
+                    
+                case 'lubuknyarai':
+                    // Konten detail untuk Lubuk Nyarai
+                    detailHTML = `
+                        <h2>🌿 Lubuk Nyarai</h2>
+                        
+                        <img src="lubuk-nyarai.jpg" alt="Lubuk Nyarai" class="modal-image"
+                             onerror="this.style.display='none'">
+                        
+                        <h3>📍 Lokasi Lengkap:</h3>
+                        <p>Hutan Gamaran, Kecamatan Lubuk Alung, ± 30 km dari pusat Kota Padang</p>
+                        
+                        <h3>🌟 Daya Tarik Utama:</h3>
+                        <ul>
+                            <li>Air terjun alami dengan tiga tingkatan yang memukau</li>
+                            <li>Trekking melewati hutan tropis yang asri</li>
+                            <li>Kolam alami untuk berenang di bawah air terjun</li>
+                            <li>Udara sejuk pegunungan dan suasana yang tenang</li>
+                        </ul>
+                        
+                        <h3>🎫 Informasi Praktis:</h3>
+                        <p><strong>Harga Tiket:</strong> Rp 5.000/orang</p>
+                        <p><strong>Jam Operasional:</strong> 08.00 - 17.00 WIB</p>
+                        <p><strong>Waktu Tempuh dari Padang:</strong> ± 45 menit berkendara</p>
+                        <p><strong>Fasilitas:</strong> Area parkir, warung sederhana, toilet</p>
+                        
+                        <h3>⚠️ Yang Perlu Diperhatikan:</h3>
+                        <ul>
+                            <li>Medan trekking cukup menantang (± 30 menit berjalan)</li>
+                            <li>Gunakan alas kaki anti selip</li>
+                            <li>Bawa pakaian ganti jika ingin berenang</li>
+                            <li>Jaga kebersihan, buang sampah pada tempatnya</li>
+                        </ul>
+                        
+                        <h3>💡 Tips Berkunjung:</h3>
+                        <ul>
+                            <li>Datang pagi hari untuk menghindari hujan sore</li>
+                            <li>Bawa bekal makanan karena warung terbatas</li>
+                            <li>Kondisi fisik harus cukup prima untuk trekking</li>
+                            <li>Hindari berkunjung saat musim hujan karena jalur licin</li>
+                        </ul>
+                    `;
+                    break;
+                    
+                case 'museum':
+                    // Konten detail untuk Museum Adityawarman
+                    detailHTML = `
+                        <h2>🏛️ Museum Adityawarman</h2>
+                        
+                        <img src="museum-adityawarman.jpg" alt="Museum Adityawarman" class="modal-image"
+                             onerror="this.style.display='none'">
+                        
+                        <h3>📍 Lokasi Lengkap:</h3>
+                        <p>Jl. Diponegoro No. 10, Belakang Tangsi, Padang Barat</p>
+                        
+                        <h3>🌟 Daya Tarik Utama:</h3>
+                        <ul>
+                            <li>Arsitektur berbentuk Rumah Gadang khas Minangkabau</li>
+                            <li>Koleksi lebih dari 6.000 benda bersejarah</li>
+                            <li>Artefak budaya Minangkabau dari masa prasejarah hingga modern</li>
+                            <li>Informasi lengkap tentang sistem matrilineal Minangkabau</li>
+                        </ul>
+                        
+                        <h3>🎫 Informasi Praktis:</h3>
+                        <p><strong>Harga Tiket:</strong> Rp 5.000/orang (dewasa), Rp 2.000/anak</p>
+                        <p><strong>Jam Operasional:</strong></p>
+                        <ul>
+                            <li>Selasa - Kamis: 08.00 - 16.00 WIB</li>
+                            <li>Jumat: 08.00 - 11.00 WIB</li>
+                            <li>Sabtu - Minggu: 08.00 - 16.30 WIB</li>
+                            <li>TUTUP: Senin dan Hari Libur Nasional</li>
+                        </ul>
+                        <p><strong>Fasilitas:</strong> Parkir, toilet, mushola, taman, perpustakaan mini</p>
+                        
+                        <h3>📚 Koleksi Museum:</h3>
+                        <ul>
+                            <li>Etnografi: Pakaian adat, senjata tradisional, alat musik</li>
+                            <li>Arkeologi: Peninggalan prasejarah dan Hindu-Buddha</li>
+                            <li>Numismatika: Mata uang kuno Nusantara</li>
+                            <li>Historika: Dokumen dan foto bersejarah</li>
+                        </ul>
+                        
+                        <h3>💡 Tips Berkunjung:</h3>
+                        <ul>
+                            <li>Datang pagi untuk menghindari panas dan pengunjung ramai</li>
+                            <li>Durasi kunjungan ideal: 1-2 jam</li>
+                            <li>Boleh foto tapi tanpa flash untuk menjaga koleksi</li>
+                            <li>Bisa request tour guide gratis di loket tiket</li>
+                        </ul>
+                    `;
+                    break;
+            }
+            
+            // Memasukkan HTML konten ke dalam div detailContent
+            content.innerHTML = detailHTML;
+            // Menampilkan modal dengan mengubah display menjadi 'block'
+            modal.style.display = 'block';
+        }
+
+        // === FUNGSI UNTUK MENUTUP DETAIL POP-UP ===
+        function closeDetail() {
+            // Mengambil elemen modal detail
+            var modal = document.getElementById('detailModal');
+            // Menyembunyikan modal dengan mengubah display menjadi 'none'
+            modal.style.display = 'none';
+        }
+
+        // === EVENT LISTENER UNTUK MENUTUP MODAL SAAT KLIK DI LUAR KONTEN ===
+        // Mendengarkan event klik di seluruh window/halaman
+        window.onclick = function(event) {
+            // Mengambil elemen modal welcome dan detail
+            var welcomeModal = document.getElementById('welcomeModal');
+            var detailModal = document.getElementById('detailModal');
+            
+            // Jika yang diklik adalah background modal welcome (bukan kontennya)
+            // maka tutup modal welcome
+            if (event.target == welcomeModal) {
+                welcomeModal.style.display = 'none';
+            }
+            
+            // Jika yang diklik adalah background modal detail (bukan kontennya)
+            // maka tutup modal detail
+            if (event.target == detailModal) {
+                detailModal.style.display = 'none';
+            }
+        }
+        
+        // === FUNGSI UNTUK MEMBUAT DAN MENAMPILKAN PETA INTERAKTIF ===
+        function initMap() {
+            try {
+                // Membuat objek peta dengan center di koordinat Kota Padang
+                // Koordinat: -0.9471 (latitude), 100.4172 (longitude)
+                // Zoom level: 12 (1-20, semakin besar semakin dekat)
+                var map = L.map('map').setView([-0.9471, 100.4172], 12);
+                
+                // Menambahkan tile layer (tampilan peta) dari OpenStreetMap
+                // Tile layer adalah gambar peta yang ditampilkan
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+                
+                // === DATA LOKASI WISATA ===
+                // Array berisi informasi setiap tempat wisata
+                var tourismSpots = [
+                    {
+                        name: '🏖️ Pantai Air Manis',
+                        lat: -1.0141,
+                        lng: 100.3639,
+                        description: 'Pantai legendaris dengan cerita Malin Kundang',
+                        visitors: '± 150.000 pengunjung/tahun'
+                    },
+                    {
+                        name: '🌅 Pantai Padang',
+                        lat: -0.9504,
+                        lng: 100.3605,
+                        description: 'Pantai di pusat kota dengan sunset menawan',
+                        visitors: '± 400.000 pengunjung/tahun'
+                    },
+                    {
+                        name: '🌿 Lubuk Nyarai',
+                        lat: -0.8167,
+                        lng: 100.3333,
+                        description: 'Air terjun alami dengan trekking menantang',
+                        visitors: '± 20.000 pengunjung/tahun'
+                    },
+                    {
+                        name: '🏛️ Museum Adityawarman',
+                        lat: -0.9553,
+                        lng: 100.3602,
+                        description: 'Museum budaya Minangkabau',
+                        visitors: '± 10.000 pengunjung/tahun'
+                    }
+                ];
+                
+                // === MENAMBAHKAN MARKER UNTUK SETIAP WISATA ===
+                // Loop untuk membuat marker di setiap lokasi
+                tourismSpots.forEach(function(spot) {
+                    // Membuat marker di koordinat yang ditentukan
+                    var marker = L.marker([spot.lat, spot.lng]).addTo(map);
+                    
+                    // Membuat konten HTML untuk popup
+                    var popupContent = `
+                        <div style="text-align: center; min-width: 200px;">
+                            <h3 style="margin: 0 0 10px 0; color: #003366; font-size: 16px;">${spot.name}</h3>
+                            <p style="margin: 5px 0; font-size: 14px;"><strong>${spot.description}</strong></p>
+                            <p style="margin: 5px 0; color: #666; font-size: 13px;">${spot.visitors}</p>
+                        </div>
+                    `;
+                    
+                    // Menghubungkan popup ke marker
+                    // Popup akan muncul ketika marker diklik
+                    marker.bindPopup(popupContent);
+                });
+                
+                // === MENAMBAHKAN CIRCLE DI PUSAT KOTA ===
+                // Circle untuk menandai area pusat Kota Padang
+                L.circle([-0.9471, 100.4172], {
+                    color: 'deepskyblue',        // Warna garis border
+                    fillColor: '#87ceeb',        // Warna isi circle
+                    fillOpacity: 0.3,            // Transparansi isi (0-1)
+                    radius: 3000                 // Radius dalam meter (3km)
+                }).addTo(map).bindPopup('<strong>Pusat Kota Padang</strong>');
+                
+            } catch (error) {
+                // Jika terjadi error saat membuat peta
+                console.error('Error membuat peta:', error);
+                document.getElementById('map').innerHTML = 
+                    '<p style="text-align: center; padding: 50px; color: red;">Maaf, peta tidak dapat ditampilkan. Pastikan koneksi internet stabil.</p>';
+            }
+        }
+    </script>
+
+</body>
+</html>
